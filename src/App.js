@@ -1373,7 +1373,7 @@ export default function App() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(7,1fr)",
+                gridTemplateColumns: "repeat(7,minmax(0,1fr))",
                 gap: 3,
                 marginBottom: 3,
               }}
@@ -1382,6 +1382,7 @@ export default function App() {
                 <div
                   key={d}
                   style={{
+                    minWidth: 0,
                     textAlign: "center",
                     fontSize: 11,
                     fontWeight: 700,
@@ -1399,7 +1400,7 @@ export default function App() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(7,1fr)",
+                gridTemplateColumns: "repeat(7,minmax(0,1fr))",
                 gap: 3,
               }}
             >
@@ -1420,6 +1421,7 @@ export default function App() {
                     key={idx}
                     onClick={() => valid && openAdd(day)}
                     style={{
+                      minWidth: 0,
                       minHeight: 78,
                       background: valid ? "#fff" : "#f8fafc",
                       border: isToday
@@ -1463,6 +1465,7 @@ export default function App() {
                             display: "flex",
                             flexDirection: "column",
                             gap: 2,
+                            minWidth: 0,
                           }}
                         >
                           {dayJobs.map((job) => {
@@ -1487,6 +1490,9 @@ export default function App() {
                                   overflow: "hidden",
                                   whiteSpace: "nowrap",
                                   textOverflow: "ellipsis",
+                                  maxWidth: "100%",
+                                  minWidth: 0,
+                                  display: "block",
                                 }}
                                 title={job.client}
                               >
