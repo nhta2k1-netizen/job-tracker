@@ -47,9 +47,9 @@ const TIME_SLOTS = [
 const CUSTOMER_GROUPS = ["Khách lẻ", "Vinschool"];
 
 const STATUS_CFG = {
-  CHƯA: { bg: "#f59e0b", light: "#fef3c7", text: "#fff", dot: "#f59e0b" },
+  CHƯA: { bg: "#ef4444", light: "#fee2e2", text: "#fff", dot: "#ef4444" },
   XONG: { bg: "#22c55e", light: "#dcfce7", text: "#fff", dot: "#22c55e" },
-  HỦY: { bg: "#ef4444", light: "#fee2e2", text: "#fff", dot: "#ef4444" },
+  HỦY: { bg: "#64748b", light: "#f1f5f9", text: "#fff", dot: "#64748b" },
 };
 
 const TABS = ["📅 Lịch", "📊 Thống kê", "🔍 Tìm kiếm"];
@@ -119,7 +119,7 @@ const reportDateTime = () =>
 
 const getJobColor = (job) => {
   if (job.status === "XONG" && job.paymentStatus === "UNPAID") {
-    return { bg: "#ff7a12", text: "#fff" };
+    return { bg: "#facc15", text: "#713f12" };
   }
 
   return STATUS_CFG[job.status] || STATUS_CFG["CHƯA"];
@@ -1656,7 +1656,7 @@ export default function App() {
                     width: 10,
                     height: 10,
                     borderRadius: 3,
-                    background: "#ff7a12",
+                    background: "#facc15",
                   }}
                 />
                 XONG chưa thanh toán
