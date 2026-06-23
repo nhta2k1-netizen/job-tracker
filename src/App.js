@@ -178,6 +178,9 @@ export default function App() {
   const [revenueGroup, setRevenueGroup] = useState("ALL");
   const [showReport, setShowReport] = useState(false);
 
+  const [aiText, setAiText] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+
   const [toast, setToast] = useState(null);
   const toastRef = useRef();
 
@@ -287,6 +290,58 @@ export default function App() {
     toastRef.current = setTimeout(() => setToast(null), 2500);
   }
 
+  async function handleAIFill() {
+    const text = aiText.trim();
+
+    if (!text) {
+      showToast("Hãy nhập mô tả job trước", "#ef4444");
+      return;
+    }
+
+    setAiLoading(true);
+
+    try {
+      const res = await fetch("/api/parse-job", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Lỗi không xác định");
+      }
+
+      const fields = data.fields || {};
+
+      if (Object.keys(fields).length === 0) {
+        showToast("AI không trích xuất được thông tin nào", "#f59e0b");
+        return;
+      }
+
+      setForm((p) => ({
+        ...p,
+        ...(fields.client ? { client: fields.client } : {}),
+        ...(fields.phone ? { phone: fields.phone } : {}),
+        ...(fields.location ? { location: fields.location } : {}),
+        ...(fields.price ? { price: formatMoneyInput(fields.price) } : {}),
+        ...(fields.startTime ? { startTime: fields.startTime } : {}),
+        ...(fields.timeSlot ? { timeSlot: fields.timeSlot } : {}),
+        ...(fields.customerGroup ? { customerGroup: fields.customerGroup } : {}),
+        ...(fields.note ? { note: fields.note } : {}),
+      }));
+
+      showToast("✨ AI đã điền giúp bạn, kiểm tra lại trước khi lưu");
+    } catch (error) {
+      console.error("Lỗi AI điền job:", error);
+      showToast("AI điền lỗi: " + error.message, "#ef4444");
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+
   const prevMonth = () => {
     if (month === 0) {
       setMonth(11);
@@ -310,6 +365,7 @@ export default function App() {
     setForm(EMPTY_FORM);
     setEditId(null);
     setEditKey(null);
+    setAiText("");
     setModal("add");
   }
 
@@ -336,6 +392,7 @@ export default function App() {
 
     setEditId(job.id);
     setViewJob(null);
+    setAiText("");
     setModal("edit");
   }
 
@@ -1872,6 +1929,46 @@ export default function App() {
                 }}
               >
                 ✕
+              </button>
+            </div>
+
+            <div
+              style={{
+                background: "#f5f3ff",
+                border: "1.5px solid #ddd6fe",
+                borderRadius: 14,
+                padding: 12,
+                marginBottom: 16,
+              }}
+            >
+              <label style={{ ...S.label, color: "#6d28d9" }}>
+                ✨ Dán mô tả job, AI tự điền
+              </label>
+              <textarea
+                value={aiText}
+                onChange={(e) => setAiText(e.target.value)}
+                placeholder="VD: Chị Lan 0912345678, khách Vinschool, chụp ở Quận 7, 9h sáng, giá 1tr2..."
+                rows={3}
+                style={{
+                  ...S.input,
+                  resize: "vertical",
+                  fontFamily: "inherit",
+                  marginBottom: 8,
+                }}
+              />
+              <button
+                onClick={handleAIFill}
+                disabled={aiLoading}
+                style={{
+                  ...S.btn("#7c3aed"),
+                  width: "100%",
+                  padding: "10px",
+                  fontSize: 14,
+                  opacity: aiLoading ? 0.6 : 1,
+                  cursor: aiLoading ? "wait" : "pointer",
+                }}
+              >
+                {aiLoading ? "⏳ Đang phân tích..." : "✨ AI điền tự động"}
               </button>
             </div>
 
