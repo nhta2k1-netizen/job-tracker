@@ -4,6 +4,7 @@ import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendEmailVerification,
   signOut,
 } from "firebase/auth";
 import { db, auth } from "./firebase";
@@ -117,6 +118,29 @@ const reportDateTime = () =>
     minute: "2-digit",
   });
 
+const getAuthErrorMessage = (error, action) => {
+  switch (error?.code) {
+    case "auth/invalid-email":
+      return "Địa chỉ email không hợp lệ.";
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+      return "Sai email hoặc mật khẩu.";
+    case "auth/email-already-in-use":
+      return "Email này đã được đăng ký. Hãy đăng nhập thay vì tạo tài khoản mới.";
+    case "auth/weak-password":
+      return "Mật khẩu quá yếu; hãy dùng ít nhất 6 ký tự.";
+    case "auth/too-many-requests":
+      return "Bạn đã thử quá nhiều lần. Vui lòng đợi một lúc rồi thử lại.";
+    case "auth/network-request-failed":
+      return "Không thể kết nối Firebase. Hãy kiểm tra mạng rồi thử lại.";
+    default:
+      return action === "register"
+        ? "Không thể tạo tài khoản. Vui lòng thử lại."
+        : "Không thể đăng nhập. Vui lòng thử lại.";
+  }
+};
+
 const getJobColor = (job) => {
   if (job.status === "XONG" && job.paymentStatus === "UNPAID") {
     return { bg: "#facc15", text: "#713f12" };
@@ -191,10 +215,11 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [authMessage, setAuthMessage] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+      setUser(currentUser?.emailVerified ? currentUser : null);
       setAuthLoading(false);
     });
 
@@ -202,22 +227,70 @@ export default function App() {
   }, []);
 
   async function register() {
+    setAuthMessage(null);
+
+    if (!email.trim() || !password) {
+      setAuthMessage({ type: "error", text: "Hãy nhập đầy đủ email và mật khẩu." });
+      return;
+    }
+
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      showToast("Tạo tài khoản thành công");
+      auth.languageCode = "vi";
+      const credential = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password
+      );
+
+      await sendEmailVerification(credential.user);
+      await signOut(auth);
+      setPassword("");
+      setAuthMessage({
+        type: "success",
+        text: "Đã tạo tài khoản và gửi email xác minh. Hãy kiểm tra Hộp thư đến hoặc Spam, bấm liên kết xác minh rồi đăng nhập.",
+      });
     } catch (error) {
       console.error("Lỗi tạo tài khoản:", error);
-      showToast("Không tạo được tài khoản", "#ef4444");
+      setAuthMessage({ type: "error", text: getAuthErrorMessage(error, "register") });
     }
   }
 
   async function login() {
+    setAuthMessage(null);
+
+    if (!email.trim() || !password) {
+      setAuthMessage({ type: "error", text: "Hãy nhập đầy đủ email và mật khẩu." });
+      return;
+    }
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      showToast("Đăng nhập thành công");
+      const credential = await signInWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password
+      );
+
+      if (!credential.user.emailVerified) {
+        auth.languageCode = "vi";
+
+        try {
+          await sendEmailVerification(credential.user);
+        } catch (verificationError) {
+          console.warn("Không gửi lại được email xác minh:", verificationError);
+        }
+
+        await signOut(auth);
+        setAuthMessage({
+          type: "warning",
+          text: "Email chưa được xác minh. Hệ thống đã thử gửi lại thư xác minh; hãy kiểm tra Hộp thư đến hoặc Spam.",
+        });
+        return;
+      }
+
+      setUser(credential.user);
     } catch (error) {
       console.error("Lỗi đăng nhập:", error);
-      showToast("Sai email hoặc mật khẩu", "#ef4444");
+      setAuthMessage({ type: "error", text: getAuthErrorMessage(error, "login") });
     }
   }
 
@@ -667,6 +740,41 @@ export default function App() {
         <button onClick={register} style={{ padding: 12 }}>
           Tạo tài khoản
         </button>
+
+        {authMessage && (
+          <div
+            role="alert"
+            style={{
+              marginTop: 16,
+              padding: "12px 14px",
+              borderRadius: 10,
+              fontSize: 13,
+              lineHeight: 1.5,
+              fontWeight: 600,
+              background:
+                authMessage.type === "success"
+                  ? "#dcfce7"
+                  : authMessage.type === "warning"
+                  ? "#fef3c7"
+                  : "#fee2e2",
+              border: `1px solid ${
+                authMessage.type === "success"
+                  ? "#86efac"
+                  : authMessage.type === "warning"
+                  ? "#fcd34d"
+                  : "#fca5a5"
+              }`,
+              color:
+                authMessage.type === "success"
+                  ? "#166534"
+                  : authMessage.type === "warning"
+                  ? "#92400e"
+                  : "#b91c1c",
+            }}
+          >
+            {authMessage.text}
+          </div>
+        )}
       </div>
     );
   }
