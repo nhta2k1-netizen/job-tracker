@@ -369,6 +369,20 @@ export default function App() {
     setModal("add");
   }
 
+  function openQuickAdd() {
+    const now = new Date();
+
+    setTab(0);
+    setYear(now.getFullYear());
+    setMonth(now.getMonth());
+    setSelDate(now.getDate());
+    setForm(EMPTY_FORM);
+    setEditId(null);
+    setEditKey(null);
+    setAiText("");
+    setModal("add");
+  }
+
   function openEdit(job) {
     const key = job._key || null;
     const dayFromKey = key ? Number(key.split("-")[2]) : job._day;
@@ -1227,6 +1241,20 @@ export default function App() {
               </div>
 
               <button
+                onClick={openQuickAdd}
+                style={{
+                  ...S.btn("#7c3aed"),
+                  fontSize: 12,
+                  padding: "8px 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                }}
+              >
+                ✨ AI tạo job
+              </button>
+
+              <button
                 onClick={() => setShowReport(true)}
                 style={{
                   ...S.btn("#0b77ff"),
@@ -1931,6 +1959,34 @@ export default function App() {
                 ✕
               </button>
             </div>
+
+            {modal === "add" && (
+              <div style={{ marginBottom: 14 }}>
+                <label style={S.label}>Ngày thực hiện *</label>
+                <input
+                  type="date"
+                  value={
+                    selDate
+                      ? `${year}-${String(month + 1).padStart(2, "0")}-${String(
+                          selDate
+                        ).padStart(2, "0")}`
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const [nextYear, nextMonth, nextDay] = e.target.value
+                      .split("-")
+                      .map(Number);
+
+                    if (nextYear && nextMonth && nextDay) {
+                      setYear(nextYear);
+                      setMonth(nextMonth - 1);
+                      setSelDate(nextDay);
+                    }
+                  }}
+                  style={S.input}
+                />
+              </div>
+            )}
 
             <div
               style={{
