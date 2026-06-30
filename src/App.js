@@ -4,7 +4,6 @@ import {
   onAuthStateChanged,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  sendEmailVerification,
   signOut,
 } from "firebase/auth";
 import { db, auth } from "./firebase";
@@ -219,7 +218,7 @@ export default function App() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser?.emailVerified ? currentUser : null);
+      setUser(currentUser || null);
       setAuthLoading(false);
     });
 
@@ -235,19 +234,17 @@ export default function App() {
     }
 
     try {
-      auth.languageCode = "vi";
       const credential = await createUserWithEmailAndPassword(
         auth,
         email.trim(),
         password
       );
 
-      await sendEmailVerification(credential.user);
-      await signOut(auth);
       setPassword("");
+      setUser(credential.user);
       setAuthMessage({
         type: "success",
-        text: "Đã tạo tài khoản và gửi email xác minh. Hãy kiểm tra Hộp thư đến hoặc Spam, bấm liên kết xác minh rồi đăng nhập.",
+        text: "Đã tạo tài khoản và đăng nhập thành công.",
       });
     } catch (error) {
       console.error("Lỗi tạo tài khoản:", error);
@@ -269,23 +266,6 @@ export default function App() {
         email.trim(),
         password
       );
-
-      if (!credential.user.emailVerified) {
-        auth.languageCode = "vi";
-
-        try {
-          await sendEmailVerification(credential.user);
-        } catch (verificationError) {
-          console.warn("Không gửi lại được email xác minh:", verificationError);
-        }
-
-        await signOut(auth);
-        setAuthMessage({
-          type: "warning",
-          text: "Email chưa được xác minh. Hệ thống đã thử gửi lại thư xác minh; hãy kiểm tra Hộp thư đến hoặc Spam.",
-        });
-        return;
-      }
 
       setUser(credential.user);
     } catch (error) {
