@@ -1103,34 +1103,44 @@ export default function App() {
               )}
             </tbody>
 
-            <tfoot>
-              <tr style={{ background: "#f8fafc" }}>
-                <td
-                  colSpan={6}
-                  style={{
-                    padding: "24px 18px",
-                    color: "#0b77ff",
-                    fontSize: 24,
-                    fontWeight: 950,
-                  }}
-                >
-                  TỔNG CỘNG
-                </td>
-
-                <td
-                  style={{
-                    padding: "24px 18px",
-                    textAlign: "right",
-                    color: "#0b77ff",
-                    fontSize: 24,
-                    fontWeight: 950,
-                  }}
-                >
-                  {moneyReport(totalAll)}
-                </td>
-              </tr>
-            </tfoot>
           </table>
+
+          <div
+            className="report-total"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr auto",
+              gap: 24,
+              alignItems: "center",
+              marginTop: 0,
+              padding: "24px 18px",
+              background: "#f8fafc",
+              borderTop: "3px solid #e5e7eb",
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
+            }}
+          >
+            <div
+              style={{
+                color: "#0b77ff",
+                fontSize: 24,
+                fontWeight: 950,
+              }}
+            >
+              TỔNG CỘNG
+            </div>
+
+            <div
+              style={{
+                textAlign: "right",
+                color: "#0b77ff",
+                fontSize: 24,
+                fontWeight: 950,
+              }}
+            >
+              {moneyReport(totalAll)}
+            </div>
+          </div>
 
           <div
             style={{
